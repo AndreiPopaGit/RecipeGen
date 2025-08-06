@@ -1,7 +1,9 @@
 # app/api/routes.py
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,Response
 from app.schemas.meal_plan import MealPlanRequest
+from app.schemas.image_request import ImageRequest
 from app.services import gemini_service
+from app.services import image_service
 
 # Create an API router
 router = APIRouter()
@@ -20,6 +22,22 @@ async def generate_meal_plan_endpoint(request: MealPlanRequest):
         # If anything goes wrong in the service, catch it here
         print(f"An error occurred in the API endpoint: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate meal plan.")
+    
+# +++ IMAGE GENERATION ENDPOINT (New) +++
+@router.post("/api/generate-image", tags=["Image Generation"])
+async def generate_image_endpoint(request: ImageRequest):
+    """
+    Generates an image based on a text prompt.
+    """
+    try:
+        # Call the image service to get the image bytes
+        image_bytes = image_service.generate_image_from_prompt(request.prompt)
+        
+        # Return the bytes directly as a response with the correct media type
+        return Response(content=image_bytes, media_type="image/png")
+    except Exception as e:
+        print(f"An error occurred in the image generation endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate image.")
 
 @router.get("/", tags=["Status"])
 def read_root():
